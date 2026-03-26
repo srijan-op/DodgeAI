@@ -1,0 +1,86 @@
+# DodgeAI stack: Neo4j + Redis + FastAPI backend + Vite SPA (nginx).
+# Usage: copy .env.example → .env, then: docker compose up -d --build
+# App UI: http://localhost:8080  (API proxied at /api)
+
+services:
+  neo4j:
+    image: neo4j:5.18-community
+    container_name: dodgeai-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+    volumes:
+      - neo4j_data:/data
+      - ./logs:/logs
+      - ./import:/var/lib/neo4j/import
+    networks:
+      - graph_network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "${NEO4J_USER}", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 35s
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: dodgeai-redis
+    networks:
+      - graph_network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: dodgeai-backend:latest
+    container_name: dodgeai-backend
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: ${NEO4J_USER}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      NEO4J_DATABASE: ${NEO4J_DATABASE:-neo4j}
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      GROQ_API_KEY_1: ${GROQ_API_KEY_1:-}
+      GROQ_API_KEY_2: ${GROQ_API_KEY_2:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - graph_network
+    restart: unless-stopped
+    # Uncomment to reach the API directly (e.g. curl) without going through nginx:
+    # ports:
+    #   - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: dodgeai-frontend:latest
+    container_name: dodgeai-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - graph_network
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+
+networks:
+  graph_network:
+    driver: bridge

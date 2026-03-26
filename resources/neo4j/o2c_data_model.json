@@ -1,0 +1,198 @@
+{
+  "metadata": {
+    "name": "SAP_O2C_ContextGraph",
+    "version": "1.0.0",
+    "description": "Canonical Neo4j model for DodgeAI sap-o2c-data. JournalEntry = FI line (AR item). Payment = clearing document.",
+    "sapItemNormalization": "Strip leading zeros from SD item numbers when joining billing ↔ delivery ↔ sales order lines."
+  },
+  "nodes": [
+    {
+      "label": "Customer",
+      "key_property": { "name": "businessPartner", "type": "STRING", "description": "Same as customer number in JSONL" },
+      "properties": [
+        { "name": "businessPartnerName", "type": "STRING" },
+        { "name": "businessPartnerIsBlocked", "type": "BOOLEAN" }
+      ],
+      "metadata": { "sourceFolder": "business_partners" }
+    },
+    {
+      "label": "Address",
+      "key_property": { "name": "addressKey", "type": "STRING", "description": "businessPartner + '|' + addressId" },
+      "properties": [
+        { "name": "cityName", "type": "STRING" },
+        { "name": "country", "type": "STRING" },
+        { "name": "region", "type": "STRING" },
+        { "name": "streetName", "type": "STRING" },
+        { "name": "postalCode", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "business_partner_addresses" }
+    },
+    {
+      "label": "CompanyCode",
+      "key_property": { "name": "companyCode", "type": "STRING" },
+      "properties": [],
+      "metadata": { "sourceFolder": "customer_company_assignments (distinct)" }
+    },
+    {
+      "label": "SalesArea",
+      "key_property": { "name": "salesAreaKey", "type": "STRING", "description": "salesOrganization|distributionChannel|division" },
+      "properties": [
+        { "name": "salesOrganization", "type": "STRING" },
+        { "name": "distributionChannel", "type": "STRING" },
+        { "name": "division", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "customer_sales_area_assignments, sales_order_headers (distinct)" }
+    },
+    {
+      "label": "SalesOrder",
+      "key_property": { "name": "salesOrder", "type": "STRING" },
+      "properties": [
+        { "name": "totalNetAmount", "type": "STRING" },
+        { "name": "transactionCurrency", "type": "STRING" },
+        { "name": "salesOrganization", "type": "STRING" },
+        { "name": "distributionChannel", "type": "STRING" },
+        { "name": "organizationDivision", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "sales_order_headers" }
+    },
+    {
+      "label": "SalesOrderItem",
+      "key_property": { "name": "salesOrderItemKey", "type": "STRING", "description": "salesOrder|normalizedSalesOrderItem" },
+      "properties": [
+        { "name": "salesOrder", "type": "STRING" },
+        { "name": "salesOrderItem", "type": "STRING" },
+        { "name": "material", "type": "STRING" },
+        { "name": "requestedQuantity", "type": "STRING" },
+        { "name": "netAmount", "type": "STRING" },
+        { "name": "productionPlant", "type": "STRING" },
+        { "name": "storageLocation", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "sales_order_items" }
+    },
+    {
+      "label": "ScheduleLine",
+      "key_property": { "name": "scheduleLineKey", "type": "STRING", "description": "salesOrder|normalizedItem|scheduleLine" },
+      "properties": [
+        { "name": "confirmedDeliveryDate", "type": "DATE" },
+        { "name": "confdOrderQtyByMatlAvailCheck", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "sales_order_schedule_lines" }
+    },
+    {
+      "label": "Delivery",
+      "key_property": { "name": "deliveryDocument", "type": "STRING" },
+      "properties": [
+        { "name": "shippingPoint", "type": "STRING" },
+        { "name": "creationDate", "type": "DATE" }
+      ],
+      "metadata": { "sourceFolder": "outbound_delivery_headers" }
+    },
+    {
+      "label": "DeliveryItem",
+      "key_property": { "name": "deliveryItemKey", "type": "STRING", "description": "deliveryDocument|normalizedDeliveryDocumentItem" },
+      "properties": [
+        { "name": "deliveryDocument", "type": "STRING" },
+        { "name": "deliveryDocumentItem", "type": "STRING" },
+        { "name": "actualDeliveryQuantity", "type": "STRING" },
+        { "name": "plant", "type": "STRING" },
+        { "name": "storageLocation", "type": "STRING" },
+        { "name": "referenceSdDocument", "type": "STRING" },
+        { "name": "referenceSdDocumentItem", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "outbound_delivery_items" }
+    },
+    {
+      "label": "Invoice",
+      "key_property": { "name": "billingDocument", "type": "STRING" },
+      "properties": [
+        { "name": "totalNetAmount", "type": "STRING" },
+        { "name": "transactionCurrency", "type": "STRING" },
+        { "name": "companyCode", "type": "STRING" },
+        { "name": "fiscalYear", "type": "STRING" },
+        { "name": "accountingDocument", "type": "STRING" },
+        { "name": "soldToParty", "type": "STRING" },
+        { "name": "billingDocumentIsCancelled", "type": "BOOLEAN" },
+        { "name": "cancelledBillingDocument", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "billing_document_headers, billing_document_cancellations" }
+    },
+    {
+      "label": "InvoiceItem",
+      "key_property": { "name": "invoiceItemKey", "type": "STRING", "description": "billingDocument|normalizedBillingDocumentItem" },
+      "properties": [
+        { "name": "billingDocument", "type": "STRING" },
+        { "name": "billingDocumentItem", "type": "STRING" },
+        { "name": "material", "type": "STRING" },
+        { "name": "netAmount", "type": "STRING" },
+        { "name": "referenceSdDocument", "type": "STRING" },
+        { "name": "referenceSdDocumentItem", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "billing_document_items" }
+    },
+    {
+      "label": "JournalEntry",
+      "key_property": { "name": "journalLineKey", "type": "STRING", "description": "companyCode|fiscalYear|accountingDocument|accountingDocumentItem" },
+      "properties": [
+        { "name": "referenceDocument", "type": "STRING" },
+        { "name": "glAccount", "type": "STRING" },
+        { "name": "amountInTransactionCurrency", "type": "STRING" },
+        { "name": "transactionCurrency", "type": "STRING" },
+        { "name": "clearingAccountingDocument", "type": "STRING" },
+        { "name": "clearingDocFiscalYear", "type": "STRING" },
+        { "name": "customer", "type": "STRING" },
+        { "name": "postingDate", "type": "DATE" }
+      ],
+      "metadata": { "sourceFolder": "journal_entry_items_accounts_receivable, payments_accounts_receivable" }
+    },
+    {
+      "label": "Payment",
+      "key_property": { "name": "paymentKey", "type": "STRING", "description": "companyCode|clearingDocFiscalYear|clearingAccountingDocument" },
+      "properties": [],
+      "metadata": { "sourceFolder": "Derived from distinct clearing keys on AR lines" }
+    },
+    {
+      "label": "Product",
+      "key_property": { "name": "product", "type": "STRING" },
+      "properties": [
+        { "name": "productType", "type": "STRING" },
+        { "name": "productGroup", "type": "STRING" }
+      ],
+      "metadata": { "sourceFolder": "products" }
+    },
+    {
+      "label": "Plant",
+      "key_property": { "name": "plant", "type": "STRING" },
+      "properties": [{ "name": "plantName", "type": "STRING" }],
+      "metadata": { "sourceFolder": "plants" }
+    },
+    {
+      "label": "StorageLocation",
+      "key_property": { "name": "storageLocationKey", "type": "STRING", "description": "plant|storageLocation" },
+      "properties": [],
+      "metadata": { "sourceFolder": "product_storage_locations (distinct pairs), sales_order_items, outbound_delivery_items" }
+    }
+  ],
+  "relationships": [
+    { "type": "PLACED", "start_node_label": "Customer", "end_node_label": "SalesOrder", "metadata": { "join": "SalesOrder.soldToParty = Customer.businessPartner" } },
+    { "type": "HAS_ITEM", "start_node_label": "SalesOrder", "end_node_label": "SalesOrderItem", "metadata": { "join": "same salesOrder; item key uses normalized item" } },
+    { "type": "FULFILLED_BY", "start_node_label": "SalesOrderItem", "end_node_label": "DeliveryItem", "metadata": { "join": "DeliveryItem.referenceSdDocument = SalesOrderItem.salesOrder AND norm(DeliveryItem.referenceSdDocumentItem) = norm(SalesOrderItem.salesOrderItem)" } },
+    { "type": "PART_OF", "start_node_label": "DeliveryItem", "end_node_label": "Delivery", "metadata": { "join": "deliveryDocument" } },
+    { "type": "INVOICED_AS", "start_node_label": "DeliveryItem", "end_node_label": "InvoiceItem", "metadata": { "join": "InvoiceItem.referenceSdDocument = DeliveryItem.deliveryDocument AND norm(InvoiceItem.referenceSdDocumentItem) = norm(DeliveryItem.deliveryDocumentItem); created when loading billing_document_items; billing references delivery, not SO" } },
+    { "type": "BILLED_BY", "start_node_label": "SalesOrderItem", "end_node_label": "InvoiceItem", "metadata": { "derived": true, "build": "Post-load only. MERGE (soi)-[:BILLED_BY]->(ii) WHERE EXISTS ((soi)-[:FULFILLED_BY]->(:DeliveryItem)-[:INVOICED_AS]->(ii)). See cypher/02_derived_billed_by.cypher. Enables fast broken-flow checks without two-hop traversal." } },
+    { "type": "PART_OF", "start_node_label": "InvoiceItem", "end_node_label": "Invoice", "metadata": { "join": "billingDocument" } },
+    { "type": "POSTED_AS", "start_node_label": "Invoice", "end_node_label": "JournalEntry", "metadata": { "join": "Invoice.companyCode = JE.companyCode AND Invoice.fiscalYear = JE.fiscalYear AND Invoice.accountingDocument = JE.accountingDocument" } },
+    { "type": "CLEARED_BY", "start_node_label": "JournalEntry", "end_node_label": "Payment", "metadata": { "join": "Payment.paymentKey from JE.clearingAccountingDocument + clearingDocFiscalYear + companyCode when clearing set" } },
+    { "type": "MADE_BY", "start_node_label": "Payment", "end_node_label": "Customer", "metadata": { "join": "AR line customer matches businessPartner (via any cleared line linked to payment)" } },
+    { "type": "REFERENCES", "start_node_label": "SalesOrderItem", "end_node_label": "Product", "metadata": { "join": "material = product" } },
+    { "type": "REFERENCES", "start_node_label": "InvoiceItem", "end_node_label": "Product", "metadata": { "join": "material = product" } },
+    { "type": "PRODUCED_AT", "start_node_label": "SalesOrderItem", "end_node_label": "Plant", "metadata": { "join": "productionPlant = plant" } },
+    { "type": "SHIPPED_FROM", "start_node_label": "DeliveryItem", "end_node_label": "Plant", "metadata": { "join": "plant = plant (may be shipping point in extract)" } },
+    { "type": "AVAILABLE_AT", "start_node_label": "Product", "end_node_label": "Plant", "metadata": { "join": "product_plants" } },
+    { "type": "STORED_AT", "start_node_label": "Product", "end_node_label": "StorageLocation", "metadata": { "join": "product + plant + sloc → StorageLocation node" } },
+    { "type": "HAS_ADDRESS", "start_node_label": "Customer", "end_node_label": "Address", "metadata": { "join": "businessPartner" } },
+    { "type": "ASSIGNED_TO", "start_node_label": "Customer", "end_node_label": "CompanyCode", "metadata": { "join": "customer_company_assignments" } },
+    { "type": "IN_SALES_AREA", "start_node_label": "Customer", "end_node_label": "SalesArea", "metadata": { "join": "customer_sales_area_assignments" } },
+    { "type": "HAS_SCHEDULE", "start_node_label": "SalesOrderItem", "end_node_label": "ScheduleLine", "metadata": { "join": "salesOrder + normalized salesOrderItem + scheduleLine" } },
+    { "type": "CANCELLED_BY", "start_node_label": "Invoice", "end_node_label": "Invoice", "metadata": { "join": "cancelledBillingDocument or billing_document_cancellations linkage when modeled" } }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "nodes": [
+    {
+      "id": "Customer",
+      "labels": ["Customer"],
+      "properties": { "businessPartner": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 0, "y": 0 },
+      "caption": ""
+    },
+    {
+      "id": "SalesOrder",
+      "labels": ["SalesOrder"],
+      "properties": { "salesOrder": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 200, "y": 0 },
+      "caption": ""
+    },
+    {
+      "id": "SalesOrderItem",
+      "labels": ["SalesOrderItem"],
+      "properties": { "salesOrderItemKey": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 400, "y": 0 },
+      "caption": ""
+    },
+    {
+      "id": "DeliveryItem",
+      "labels": ["DeliveryItem"],
+      "properties": { "deliveryItemKey": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 600, "y": 0 },
+      "caption": ""
+    },
+    {
+      "id": "InvoiceItem",
+      "labels": ["InvoiceItem"],
+      "properties": { "invoiceItemKey": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 800, "y": -200 },
+      "caption": ""
+    },
+    {
+      "id": "Invoice",
+      "labels": ["Invoice"],
+      "properties": { "billingDocument": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 0, "y": -200 },
+      "caption": ""
+    },
+    {
+      "id": "JournalEntry",
+      "labels": ["JournalEntry"],
+      "properties": { "journalLineKey": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 200, "y": -200 },
+      "caption": ""
+    },
+    {
+      "id": "Payment",
+      "labels": ["Payment"],
+      "properties": { "paymentKey": "STRING | KEY" },
+      "style": {},
+      "position": { "x": 400, "y": -200 },
+      "caption": ""
+    }
+  ],
+  "relationships": [
+    { "fromId": "Customer", "toId": "SalesOrder", "type": "PLACED", "properties": {}, "style": {} },
+    { "fromId": "SalesOrder", "toId": "SalesOrderItem", "type": "HAS_ITEM", "properties": {}, "style": {} },
+    { "fromId": "SalesOrderItem", "toId": "DeliveryItem", "type": "FULFILLED_BY", "properties": {}, "style": {} },
+    { "fromId": "DeliveryItem", "toId": "InvoiceItem", "type": "INVOICED_AS", "properties": {}, "style": {} },
+    { "fromId": "InvoiceItem", "toId": "Invoice", "type": "PART_OF", "properties": {}, "style": {} },
+    { "fromId": "Invoice", "toId": "JournalEntry", "type": "POSTED_AS", "properties": {}, "style": {} },
+    { "fromId": "JournalEntry", "toId": "Payment", "type": "CLEARED_BY", "properties": {}, "style": {} },
+    { "fromId": "Payment", "toId": "Customer", "type": "MADE_BY", "properties": {}, "style": {} }
+  ],
+  "style": {},
+  "_meta": "Exported from mcp-data-modeling export_to_arrows_json; import at https://arrows.app"
+}
