@@ -1,6 +1,6 @@
 # Dodge AI — Order to Cash Graph Intelligence
 
-DEPLOYED LINK : http://18.61.211.34:8080
+DEPLOYED LINK : http://18.61.166.224:8080
 
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](https://www.docker.com/)
 [![Neo4j](https://img.shields.io/badge/Neo4j-5.18-green.svg)](https://neo4j.com/)
