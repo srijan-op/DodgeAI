@@ -1,5 +1,7 @@
 # Dodge AI — Order to Cash Graph Intelligence
 
+DEPLOYED LINK : http://18.61.211.34:8080
+
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](https://www.docker.com/)
 [![Neo4j](https://img.shields.io/badge/Neo4j-5.18-green.svg)](https://neo4j.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-teal.svg)](https://fastapi.tiangolo.com/)
@@ -9,6 +11,13 @@
 
 A full-stack application for exploring and querying SAP Order-to-Cash (O2C) process data through a Neo4j knowledge graph, an AI chat agent, and a 3D interactive graph visualization.
 
+### Bonus Features Implemented : 
+
+ - Natural language to SQL or graph query translation
+ - Highlighting nodes referenced in responses
+ - Streaming responses from the LLM
+ - Conversation memory
+ - Advanced graph analysis
 ---
 
 ## Table of Contents
@@ -61,10 +70,9 @@ Browser (React + Vite)
             │     └── graph_query  — Cypher generation + Neo4j execution
             │
             ├── Neo4j (Bolt)       — read-only queries, graph traversal
-            └── Redis              — session chat memory (optional)
+            └── Redis              — session chat memory 
 ```
 
-**Nginx** reverse-proxies `/api` to FastAPI so the browser never needs a separate port in production.
 
 ---
 
@@ -95,7 +103,7 @@ Browser (React + Vite)
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/dodgeai.git
+git clone https://github.com/srijan-op/dodgeai.git
 cd dodgeai
 ```
 
@@ -112,7 +120,7 @@ NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_strong_password_here
 NEO4J_DATABASE=neo4j
 
-GROQ_API_KEY_1=gsk_your_groq_api_key_here
+GROQ_API_KEY_1=your_groq_api_key_here
 GROQ_API_KEY_2=          # optional second key for fallback on rate limits
 ```
 
@@ -155,7 +163,7 @@ docker exec -it dodgeai-neo4j cypher-shell \
 docker exec -it dodgeai-backend python scripts/ingest_o2c.py \
   --uri bolt://neo4j:7687 \
   --user neo4j \
-  --password your_strong_password_here
+  --password your_password_here
 ```
 
 ### 7. Materialize derived edges
@@ -306,26 +314,7 @@ docker exec -it dodgeai-neo4j cypher-shell \
 | `GET` | `/api/analytics/o2c?sample_limit=20` | O2C integrity checks and summaries |
 | `POST` | `/api/chat` | LangGraph agent — streams SSE events |
 
-### Chat SSE Event Types
 
-```
-meta           → { type, session_id }
-plan           → { type, plan: { run_analyze_flow, run_graph_query, ... } }
-graph_highlight → { type, node_ids: string[] }
-token          → { type, delta: string }
-done           → { type }
-error          → { type, detail: string }
-```
-
-### Shortest Path Request Body
-
-```json
-{
-  "from_id": "Customer:320000082",
-  "to_id":   "Invoice:9000010001",
-  "max_hops": 8
-}
-```
 
 ---
 
@@ -420,6 +409,10 @@ The canonical O2C graph has **16 node labels** and **21 relationship types**.
 | `SalesArea` | `salesAreaKey` | `customer_sales_area_assignments` |
 | `ScheduleLine` | `scheduleLineKey` | `sales_order_schedule_lines` |
 
+### DB model diagram
+
+![Graph DB Model](Graph%20DB%20model%202.png)
+
 ### Core O2C Flow
 
 ```
@@ -485,8 +478,6 @@ pytest
 pytest -v
 ```
 
-Tests are discovered from the `tests/` directory. The `pytest.ini` sets `pythonpath = .` so backend modules resolve correctly.
-
 ---
 
 ## Troubleshooting
@@ -499,24 +490,6 @@ docker exec -it dodgeai-neo4j cypher-shell \
   "MATCH (n) RETURN labels(n)[0] AS label, count(*) AS cnt ORDER BY label"
 ```
 
-**Chat returns "Chat agent requires GROQ_API_KEY"**  
-Ensure `GROQ_API_KEY_1` is set in `.env` and the backend container was restarted after editing:
-```bash
-docker compose restart backend
-```
-
-**Neo4j container never becomes healthy**  
-Check logs and ensure `NEO4J_PASSWORD` meets Neo4j's minimum length (8+ characters):
-```bash
-docker compose logs neo4j
-```
-
-**Frontend shows "Graph load failed: 502"**  
-The backend is not yet ready. Check its status:
-```bash
-docker compose logs backend
-docker compose ps
-```
 
 **CORS errors in browser during local dev**  
 Make sure `CORS_ORIGINS` in `.env` includes your frontend origin (default `http://localhost:5173` for Vite dev):
@@ -524,14 +497,5 @@ Make sure `CORS_ORIGINS` in `.env` includes your frontend origin (default `http:
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-**Cypher guard errors in chat**  
-The agent retries up to 2 times. If errors persist, the question may need rephrasing so the model generates a simpler query. Check backend logs:
-```bash
-docker compose logs backend --tail 50
-```
 
----
 
-## License
-
-MIT
